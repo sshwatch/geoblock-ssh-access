@@ -35,6 +35,7 @@ show_help() {
     echo
     echo "Usage:"
     echo "  $0 install                   - Install dependencies and set up the script"
+    echo "  $0 update                    - Update GeoIP database to the latest version"
     echo "  $0 block COUNTRY_CODE        - Block a country (e.g., CN for China)"
     echo "  $0 unblock COUNTRY_CODE      - Unblock a country"
     echo "  $0 list                      - List currently blocked countries"
@@ -42,11 +43,50 @@ show_help() {
     echo "  $0 help                      - Show this help message"
     echo
     echo "Examples:"
-    echo "  $0 install"
+    echo "  $0 install                   - Initial setup"
+    echo "  $0 update                    - Update GeoIP database without reinstalling"
     echo "  $0 block RU                  - Block SSH connections from Russia"
     echo "  $0 block CN KP               - Block China and North Korea"
     echo "  $0 unblock RU                - Allow SSH connections from Russia again"
     echo "  $0 list                      - Show all currently blocked countries"
+}
+
+# Function to update GeoIP database
+update_database() {
+    echo -e "${BLUE}Updating GeoIP database...${NC}"
+    
+    # Create necessary directories if they don't exist
+    mkdir -p "$GEOIP_DIR"
+    mkdir -p "$GEOIP_DIR/lists"
+    
+    # Download the latest GeoIP database
+    echo -e "${BLUE}Downloading latest GeoIP database...${NC}"
+    curl -s -o "/tmp/dbip-country-lite.csv.gz" "https://download.db-ip.com/free/dbip-country-lite-$(date +"%Y-%m").csv.gz"
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to download GeoIP database.${NC}"
+        return 1
+    fi
+    
+    gunzip -f "/tmp/dbip-country-lite.csv.gz"
+    
+    if [ ! -f "/tmp/dbip-country-lite.csv" ]; then
+        echo -e "${RED}Failed to extract GeoIP database.${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}GeoIP database updated successfully!${NC}"
+    
+    # If countries are already blocked, ask if user wants to reapply rules
+    if [ -f "$BLOCK_LIST" ] && [ -s "$BLOCK_LIST" ]; then
+        echo -e "${YELLOW}Would you like to reapply existing country blocks with the updated database? (y/n)${NC}"
+        read -r answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            apply_rules
+        fi
+    fi
+    
+    return 0
 }
 
 # Function to install dependencies
@@ -70,13 +110,8 @@ install_dependencies() {
         return 1
     fi
     
-    # Download GeoIP database
-    echo -e "${BLUE}Downloading GeoIP database...${NC}"
-    curl -s -o "/tmp/dbip-country-lite.csv.gz" "https://download.db-ip.com/free/dbip-country-lite-$(date +"%Y-%m").csv.gz"
-    gunzip -f "/tmp/dbip-country-lite.csv.gz"
-    
-    # Create country IP lists directory
-    mkdir -p "$GEOIP_DIR/lists"
+    # Update GeoIP database by calling the dedicated function
+    update_database
     
     # Create startup service
     create_service
@@ -320,6 +355,9 @@ save_iptables_rules() {
 case "$1" in
     install)
         install_dependencies
+        ;;
+    update)
+        update_database
         ;;
     block)
         shift
