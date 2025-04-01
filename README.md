@@ -49,6 +49,14 @@ The installation process:
 
 ## 📘 Usage
 
+### Updating the GeoIP Database
+
+Keep your country IP database current with:
+
+```bash
+sudo ./geoblock-ssh.sh update
+```
+
 ### Blocking Countries
 
 Block SSH connections from specific countries using their two-letter ISO country codes:
@@ -118,13 +126,13 @@ The default configuration should work for most users, but you can modify these v
 
 ## 🔄 Updating
 
-The GeoIP database is downloaded during installation. To update it to the latest version:
+GeoBlock SSH comes with a dedicated update command to refresh the GeoIP database:
 
 ```bash
-sudo ./geoblock-ssh.sh install
+sudo ./geoblock-ssh.sh update
 ```
 
-This will re-download the database without affecting your existing configuration.
+This will download the latest database without reinstalling other components. The script will ask if you want to reapply your existing country blocks with the updated database.
 
 ## ❓ Troubleshooting
 
