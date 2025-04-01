@@ -4,8 +4,6 @@
 
 A lightweight Bash script to block SSH connection attempts from specific countries using GeoIP filtering with iptables.
 
-![GeoBlock SSH Banner](https://via.placeholder.com/800x400?text=GeoBlock+SSH)
-
 ## 🔒 Features
 
 - Block SSH connections from specific countries using their ISO country codes
